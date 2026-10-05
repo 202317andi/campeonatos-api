@@ -18,7 +18,7 @@ export function errorMiddleware(
   res: Response,
   next: NextFunction
 ) {
-  // erros que o nosso service apitou
+  // erros que o service apitou
   if (erro instanceof AppError) {
     res.status(erro.statusCode).json({ erro: erro.message });
     return;
