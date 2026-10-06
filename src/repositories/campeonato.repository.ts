@@ -19,7 +19,7 @@ export class CampeonatoRepository {
   // atualiza só os campos enviados e devolve a versão nova
   async atualizar(id: string, dados: Partial<ICampeonato>) {
     return Campeonato.findByIdAndUpdate(id, dados, {
-      new: true,           // devolve o documento já atualizado
+      returnDocument: "after",
       runValidators: true, // aplica as regras do model também na edição
     });
   }

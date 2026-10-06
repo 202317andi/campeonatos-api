@@ -1,101 +1,131 @@
-# API de Campeonatos de Futebol Amador
+# Campeonatos API
 
-API para organizar campeonatos de futebol amador. O organizador cadastra campeonatos, e os times se inscrevem com seus jogadores até o prazo de inscrição.
+Uma API para organizar campeonatos de futebol amador, daqueles de bairro, de firma ou de futsal com a turma.
 
-## Recurso principal (CRUD)
+Quem organiza cadastra o campeonato. Os times se inscrevem com seus jogadores até o prazo que o organizador definiu. Depois disso, a inscrição fecha.
 
-**Campeonato**, com os campos:
+Fiz este projeto para a disciplina de Tópicos Especiais II. Esta é a primeira entrega (o backend), e o frontend vai usar esta mesma API.
 
-- `nome`, `cidade`
-- `modalidade`: `campo`, `futsal` ou `society`
-- `dataInicio` e `prazoInscricao`
-- `maxTimes`: de 4 a 32
-- `status`: `inscricoes abertas`, `em andamento` ou `finalizado`
-- `times`: lista de times, cada um com seus jogadores (nome, número da camisa, posição e foto)
+## O que ela faz
 
-**Regras de negócio:**
+O recurso principal é o **campeonato**. Dá para criar, listar, buscar, editar e excluir.
 
-- O prazo de inscrição deve ser antes da data de início
-- Depois do prazo, não é possível inscrever times
-- O campeonato não aceita mais times que o limite (`maxTimes`)
-- Não pode haver dois times com o mesmo nome no campeonato
-- Não pode haver número de camisa repetido no mesmo time
+Dentro de cada campeonato ficam os **times**, e dentro de cada time ficam os **jogadores** (nome, número da camisa, posição e uma foto opcional).
 
-## Tecnologias
+Algumas regras que a API cuida sozinha:
 
-- Node.js + Express + TypeScript
-- MongoDB + Mongoose
-- Docker (MongoDB)
-- JWT (jsonwebtoken) + bcryptjs (login)
-- Swagger (swagger-ui-express)
-- Jest ou Vitest (testes)
+- O prazo de inscrição tem que ser antes do início do campeonato.
+- Passou do prazo, não entra mais time.
+- Campeonato lotado não aceita mais times.
+- Dois times do mesmo campeonato não podem ter o mesmo nome.
+- Dois jogadores do mesmo time não podem ter a mesma camisa.
 
-## Como executar
+Qualquer pessoa pode **consultar** os campeonatos. Para **criar, editar, excluir ou inscrever um time**, é preciso estar logado.
 
-**Pré-requisitos:** Node.js 20+ e Docker.
+## Feito com
 
-1. Instale as dependências:
+Node.js, Express, TypeScript, MongoDB (com Mongoose), Docker, JWT para o login, Swagger para a documentação e Vitest para os testes.
+
+## Como rodar
+
+Você precisa do **Node.js 20 ou mais novo** e do **Docker** aberto.
 
 ```bash
-   npm install
+# 1. instalar as dependências
+npm install
+
+# 2. criar o seu .env (depois abra e troque o JWT_SECRET)
+cp .env.example .env
+
+# 3. ligar o banco de dados
+docker compose up -d
+
+# 4. iniciar a API
+npm run dev
 ```
 
-2. Crie o arquivo `.env` a partir do exemplo:
+Pronto, a API está em http://localhost:3000.
 
-```bash
-   cp .env.example .env
-```
-
-3. Suba o MongoDB no Docker:
-
-```bash
-   docker compose up -d
-```
-
-4. Inicie a API:
-
-```bash
-   npm run dev
-```
-
-A API roda em `http://localhost:3000`.
+Para desligar o banco: `docker compose down`. Seus dados ficam guardados e voltam quando você ligar de novo.
 
 ## Variáveis de ambiente
 
-| Variável | Descrição | Exemplo |
+Estão no arquivo `.env.example`:
+
+| Variável | Para que serve | Exemplo |
 | --- | --- | --- |
 | `PORT` | Porta da API | `3000` |
-| `MONGO_URI` | Endereço do MongoDB | `mongodb://localhost:27018/campeonatos` |
-| `JWT_SECRET` | Chave para assinar o token | `uma_chave_secreta` |
-| `JWT_EXPIRES_IN` | Validade do token | `1h` |
+| `MONGO_URI` | Endereço do banco | `mongodb://localhost:27018/campeonatos` |
+| `JWT_SECRET` | Chave secreta do login | `coloque_uma_chave_secreta_aqui` |
+| `JWT_EXPIRES_IN` | Quanto tempo o login vale | `1h` |
 
-O MongoDB usa a porta **27018** no computador, para não conflitar com outro MongoDB na porta padrão (27017). Os dados ficam salvos no volume `mongo_data`.
+O banco usa a porta **27018** do seu computador. Escolhi essa para não esbarrar em outro MongoDB que já use a 27017.
 
-## Documentação (Swagger)
+## Testando pelo Swagger
 
-Acesse: **http://localhost:3000/docs**
+Com a API rodando, abra **http://localhost:3000/docs**. Lá dá para ver todas as rotas e testar clicando.
 
-Para testar as rotas protegidas:
+Para usar as rotas com cadeado:
 
-1. Cadastre um usuário em `POST /auth/registrar`
-2. Faça login em `POST /auth/login` e copie o `token`
-3. Clique em **Authorize** e cole o token
+1. Em `POST /auth/registrar`, crie um usuário.
+2. Em `POST /auth/login`, entre com ele e copie o `token` que voltar.
+3. Clique no botão **Authorize**, cole só o token e confirme.
+
+O login vale por 1 hora. Depois disso, é só entrar de novo.
 
 ## Rotas
 
-| Método | Rota | Descrição | Login? |
+| Método | Rota | O que faz | Precisa de login? |
 | --- | --- | --- | --- |
-| POST | `/auth/registrar` | Cadastra usuário | Não |
+| POST | `/auth/registrar` | Cria um usuário | Não |
 | POST | `/auth/login` | Faz login e devolve o token | Não |
-| GET | `/campeonatos` | Lista campeonatos | Não |
-| GET | `/campeonatos/:id` | Busca um campeonato | Não |
-| POST | `/campeonatos` | Cria campeonato | Sim |
-| PUT | `/campeonatos/:id` | Atualiza campeonato | Sim |
-| DELETE | `/campeonatos/:id` | Exclui campeonato | Sim |
-| POST | `/campeonatos/:id/times` | Inscreve um time | Sim |
+| GET | `/campeonatos` | Lista os campeonatos | Não |
+| GET | `/campeonatos/:id` | Mostra um campeonato | Não |
+| POST | `/campeonatos` | Cria um campeonato | Sim |
+| PUT | `/campeonatos/:id` | Edita um campeonato | Sim |
+| DELETE | `/campeonatos/:id` | Exclui um campeonato | Sim |
+| POST | `/campeonatos/:id/times` | Inscreve um time com os jogadores | Sim |
+
+## Exemplo: inscrever um time
+
+Depois de logar, em `POST /campeonatos/:id/times`:
+
+```json
+{
+  "nome": "Carga Pesada",
+  "jogadores": [
+    { "nome": "Chubasa", "numeroCamisa": 1, "posicao": "goleiro" },
+    { "nome": "Leo Krek", "numeroCamisa": 6, "posicao": "defensor" },
+    { "nome": "Pichain", "numeroCamisa": 9, "posicao": "atacante" }
+  ]
+}
+```
+
+As posições aceitas são `goleiro`, `defensor`, `meio-campo` e `atacante`. A `fotoUrl` é opcional.
 
 ## Testes
 
 ```bash
 npm test
 ```
+
+Os testes usam um banco só deles (`campeonatos_test`), então não mexem nos seus dados. Só lembre de deixar o Docker ligado.
+
+Eles cobrem o cadastro e o login (incluindo senha errada e e-mail repetido) e todo o CRUD, com os casos de erro: sem login, dados inválidos, id inválido, campeonato que não existe, prazo vencido, time repetido e camisa repetida.
+
+## Como o código está organizado
+
+```
+src/
+├── routes/        as URLs da API
+├── controllers/   recebem o pedido e respondem
+├── services/      as regras de negócio
+├── repositories/  conversam com o banco
+├── models/        o formato dos dados
+├── middlewares/   login e tratamento de erros
+├── config/        conexão com o banco
+└── docs/          documentação do Swagger
+tests/             testes automatizados
+```
+
+Um pedido passa por essas camadas nessa ordem, e cada uma tem uma função só.
